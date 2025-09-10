@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Your Branch</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Animate.css for animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    /* Top Heading */
+    h1 {
+      font-size: 36px;
+      color: #fff;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 50px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .branch-card {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.4s, box-shadow 0.4s;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .branch-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 30px rgba(0,0,0,0.25);
+    }
+
+    .branch-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      transition: transform 0.5s;
+    }
+
+    .branch-card:hover img {
+      transform: scale(1.1);
+    }
+
+    .branch-info {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .branch-info h2 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .branch-info p {
+      color: #666;
+      font-size: 16px;
+    }
+
+    /* Animation */
+    .animate__animated {
+      --animate-duration: 1s;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Heading -->
+  <h1 class="animate__animated animate__fadeInDown">SELECT YOUR BRANCH</h1>
+
+  <div class="container">
+    <!-- CSE Branch -->
+    <div class="branch-card animate__animated animate__fadeInUp" onclick="alert('CSE Selected')">
+      <img src="CSE-aa.jpg" alt="CSE">
+      <div class="branch-info">
+        <h2>CSE</h2>
+        <p>Computer Science Engineering - Dive into coding, AI, and modern tech innovations.</p>
+      </div>
+    </div>
+
+    <!-- AIDS Branch -->
+    <div class="branch-card animate__animated animate__fadeInUp" style="animation-delay: 0.2s;" onclick="alert('AIDS Selected')">
+      <img src="AIDS.jpg" alt="AIDS">
+      <div class="branch-info">
+        <h2>AIDS</h2>
+        <p>Artificial Intelligence & Data Science - Explore AI, ML, data analytics, and futuristic tech.</p>
+      </div>
+    </div>
+
+    <!-- CIVIL Branch -->
+    <div class="branch-card animate__animated animate__fadeInUp" style="animation-delay: 0.4s;" onclick="alert('CIVIL Selected')">
+      <img src="CIVIL.jpg" alt="CIVIL">
+      <div class="branch-info">
+        <h2>CIVIL</h2>
+        <p>Civil Engineering - Build infrastructure, design structures, and shape the world around you.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Optional JS for animations on scroll -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/wow/1.1.2/wow.min.js"></script>
+  <script>
+    new WOW().init();
+  </script>
+</body>
+</html>

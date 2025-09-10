@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - ASIMSAADZ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -3; /* place below canvas */
+        }
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: -4; /* place below canvas so it doesn't dull colors */
+        }
+        /* Interactive canvas wallpaper */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: -2;
+        }
+        .card-container {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .google-button {
+            transition: all 0.3s ease;
+        }
+        .google-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.3);
+        }
+        /* Fallback background when video isn't loaded/playing */
+        .bg-fallback {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000; /* solid color fallback */
+            z-index: -3;
+        }
+    </style>
+</head>
+<body class="bg-black">
+    <div id="bg-fallback" class="bg-fallback"></div>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <video autoplay loop muted playsinline id="bg-video" preload="metadata" crossorigin="anonymous">
+        <source src="https://storage.cloud.google.com/asimsaadz/butterfly.mp4" type="video/mp4">
+        <source src="mixkit-stars-in-space-background-1610-4k.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="video-overlay"></div>
+
+    <div class="flex items-center justify-center min-h-screen p-4 relative z-10">
+        <div class="w-full max-w-sm mx-auto overflow-hidden text-center">
+            <div id="signin-card" class="bg-white/20 card-container rounded-2xl shadow-2xl p-8 md:p-10">
+                <div class="mb-8">
+                    <img src="asimsaad.png" alt="ASIMSAADZ Logo" class="mx-auto h-16 w-auto mb-4 rounded-lg" loading="lazy">
+                    <h1 class="text-3xl font-bold text-white">Welcome to ASIMSAADZ</h1>
+                    <p class="text-indigo-100 mt-2">Sign in to continue.</p>
+                </div>
+
+                <button id="google-signin-btn" 
+                   class="google-button w-full inline-flex items-center justify-center bg-white text-gray-700 font-medium py-3 px-4 rounded-lg shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48">
+                        <path fill="#4285F4" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                        <path fill="#34A853" d="M43.611,20.083L43.595,20L42,20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l0.002-0.002l5.657,5.657C40.074,36.316,44,30.824,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                        <path fill="#FBBC05" d="M10.21,28.641l5.657,5.657C17.93,36.888,20.803,38,24,38c3.197,0,6.07-1.112,8.21-2.9l-5.657-5.657C25.5,29.608,24.789,30,24,30C20.44,30,17.222,28.32,15.25,25.8l-5.04,3.841C11.373,26.425,10.66,27.524,10.21,28.641z"></path>
+                        <path fill="#EA4335" d="M24,16c-1.898,0-3.64,0.73-4.95,2.05l-5.657-5.657C15.96,10.193,19.758,8,24,8c5.268,0,10.046,2.053,13.571,6.021l-5.657,5.657C30.151,17.154,27.359,16,24,16z"></path>
+                    </svg>
+                    Sign in with Google
+                </button>
+
+                <div class="text-center text-xs text-indigo-200 mt-8">
+                    <p>By signing in, you agree to our</p>
+                    <p><a href="#" class="font-medium hover:underline">Terms of Service</a> & <a href="#" class="font-medium hover:underline">Privacy Policy</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Shared flag so the canvas can know when the video is visible
+        let videoIsPlaying = false;
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2nIB45KU_b4d7ggIP-ZKDIk82UY1ElJ8",
+            authDomain: "asimsaadz-db8a5.firebaseapp.com",
+            projectId: "asimsaadz-db8a5",
+            storageBucket: "asimsaadz-db8a5.appspot.com",
+            messagingSenderId: "201921568991",
+            appId: "1:201921568991:web:46e4a57cd2bee11f3bc96a",
+            measurementId: "G-P9NDKNYZFL"
+        };
+        
+        // Initialize interactive canvas live wallpaper (Aurora Waves)
+        (function initLiveWallpaper(){
+            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const canvas = document.getElementById('bg-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            let dpr = Math.min(window.devicePixelRatio || 1, 2);
+            let w = 0, h = 0;
+            function resize(){
+                w = canvas.clientWidth; h = canvas.clientHeight;
+                canvas.width = Math.floor(w * dpr);
+                canvas.height = Math.floor(h * dpr);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            // === Butterflies ===
+            const butterflies = [];
+            const MAX_BUTTERFLIES = prefersReduced ? 0 : (isMobile ? 4 : 7);
+            function rand(min, max){ return Math.random() * (max - min) + min; }
+            function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+            function createButterfly(i){
+                const hue = [28, 200, 320, 120, 260, 340, 180][i % 7];
+                return {
+                    x: rand(0, w),
+                    y: rand(0, h),
+                    vx: rand(-0.3, 0.3),
+                    vy: rand(-0.3, 0.3),
+                    wing: rand(0, Math.PI*2),
+                    wingSpeed: rand(6, 10) * (isMobile ? 0.9 : 1),
+                    hue,
+                    size: rand(10, 18) * (isMobile ? 0.9 : 1.1),
+                };
+            }
+            for (let i=0; i<MAX_BUTTERFLIES; i++) butterflies.push(createButterfly(i));
+
+            function updateButterfly(b, dt){
+                // Steering: move gently toward pointer or wander
+                const targetX = pointer.active ? pointer.x * w : (w*0.5 + Math.sin((t + b.hue)*0.3)*w*0.25);
+                const targetY = pointer.active ? pointer.y * h : (h*0.45 + Math.cos((t + b.hue)*0.23)*h*0.2);
+                let ax = (targetX - b.x) * 0.0025;
+                let ay = (targetY - b.y) * 0.0025;
+                // Gentle turbulence
+                ax += Math.sin((b.x + t*120) * 0.002) * 0.02;
+                ay += Math.cos((b.y - t*90) * 0.002) * 0.02;
+
+                b.vx = clamp(b.vx + ax, -0.9, 0.9);
+                b.vy = clamp(b.vy + ay, -0.9, 0.9);
+                b.x += b.vx * (dt*60);
+                b.y += b.vy * (dt*60);
+
+                // Wrap softly
+                if (b.x < -40) b.x = w+40; else if (b.x > w+40) b.x = -40;
+                if (b.y < -40) b.y = h+40; else if (b.y > h+40) b.y = -40;
+
+                // Wing animation speeds up a bit with velocity
+                const speedMag = Math.hypot(b.vx, b.vy);
+                b.wing += (b.wingSpeed * (0.8 + speedMag*0.6)) * dt;
+            }
+
+            function drawButterfly(b){
+                const angle = Math.atan2(b.vy, b.vx) || 0;
+                const wingPhase = Math.sin(b.wing);
+                const wingOpen = clamp(0.3 + Math.abs(wingPhase)*0.7, 0.3, 1);
+
+                ctx.save();
+                ctx.translate(b.x, b.y);
+                ctx.rotate(angle);
+
+                // Body
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = `hsla(0 0% 100% / 0.85)`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(-b.size*0.25, 0);
+                ctx.lineTo(b.size*0.15, 0);
+                ctx.stroke();
+
+                // Wings
+                const wingW = b.size * 0.9;
+                const wingH = b.size * (1.0 + wingOpen*0.8);
+
+                const gradL = ctx.createLinearGradient(0, 0, -wingW, -wingH*0.5);
+                gradL.addColorStop(0, `hsla(${b.hue} 95% 65% / 0.9)`);
+                gradL.addColorStop(1, `hsla(${(b.hue+40)%360} 90% 60% / 0.4)`);
+                ctx.fillStyle = gradL;
+                ctx.globalCompositeOperation = 'lighter';
+
+                // Left wing
+                ctx.beginPath();
+                ctx.moveTo(0,0);
+                ctx.bezierCurveTo(-wingW*0.4, -wingH*0.2, -wingW, -wingH*0.1, -wingW, -wingH*0.6);
+                ctx.bezierCurveTo(-wingW*0.7, -wingH*0.3, -wingW*0.4, -wingH*0.05, 0,0);
+                ctx.fill();
+
+                // Right wing
+                const gradR = ctx.createLinearGradient(0, 0, wingW, -wingH*0.5);
+                gradR.addColorStop(0, `hsla(${b.hue} 95% 65% / 0.9)`);
+                gradR.addColorStop(1, `hsla(${(b.hue+40)%360} 90% 60% / 0.4)`);
+                ctx.fillStyle = gradR;
+                ctx.beginPath();
+                ctx.moveTo(0,0);
+                ctx.bezierCurveTo(wingW*0.4, -wingH*0.2, wingW, -wingH*0.1, wingW, -wingH*0.6);
+                ctx.bezierCurveTo(wingW*0.7, -wingH*0.3, wingW*0.4, -wingH*0.05, 0,0);
+                ctx.fill();
+
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.restore();
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            // Pointer influence
+            const pointer = { x: 0.5, y: 0.5, active: false };
+            function onMove(e){
+                const t = e.touches ? e.touches[0] : e;
+                const rect = canvas.getBoundingClientRect();
+                pointer.x = (t.clientX - rect.left) / rect.width;
+                pointer.y = (t.clientY - rect.top) / rect.height;
+                pointer.active = true;
+            }
+            function onLeave(){ pointer.active = false; }
+            window.addEventListener('mousemove', onMove, { passive: true });
+            window.addEventListener('touchstart', onMove, { passive: true });
+            window.addEventListener('touchmove', onMove, { passive: true });
+            window.addEventListener('mouseleave', onLeave);
+            window.addEventListener('touchend', onLeave);
+
+            // Simple pseudo-noise via layered sine waves
+            function noise1D(x, t){
+                return (
+                    Math.sin(x*1.7 + t*0.7) * 0.6 +
+                    Math.sin(x*3.1 - t*1.3) * 0.3 +
+                    Math.sin(x*5.3 + t*2.1) * 0.1
+                );
+            }
+
+            const bands = [
+                { hue: 210, sat: 95, alpha: 0.32, amp: 0.25, speed: 0.18, thickness: 0.30 }, // brighter blue
+                { hue: 275, sat: 95, alpha: 0.28, amp: 0.30, speed: 0.12, thickness: 0.36 }, // brighter purple
+                { hue: 160, sat: 90, alpha: 0.26, amp: 0.22, speed: 0.15, thickness: 0.26 }, // brighter teal
+            ];
+
+            let t = 0;
+            const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+            const samples = isMobile ? 80 : 140; // curve resolution
+            const maxFPS = 60;
+            let last = 0;
+            let rafId = 0;
+
+            function drawBackground(){
+                // If the video is playing, let it show through with a subtle darken
+                if (videoIsPlaying) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                } else {
+                    // Otherwise use pure black so aurora remains vivid
+                    ctx.fillStyle = '#000';
+                }
+                ctx.fillRect(0,0,w,h);
+            }
+
+            function drawAurora(){
+                const baseY = h * 0.5;
+                const influenceX = pointer.active ? (pointer.x - 0.5) : 0;
+                const influenceY = pointer.active ? (pointer.y - 0.5) : 0;
+                const amplitudeBoost = 1 + Math.min(0.75, Math.hypot(influenceX, influenceY) * 1.5);
+
+                for (let i=0; i<bands.length; i++){
+                    const b = bands[i];
+                    ctx.beginPath();
+                    for (let s=0; s<=samples; s++){
+                        const xNorm = s / samples; // 0..1
+                        const x = xNorm * w;
+                        const phase = t * b.speed + i * 1.3 + (pointer.active ? influenceX * 2.5 : 0);
+                        const yOffset = noise1D(xNorm * 6 + i*0.8 + influenceY*2, phase) * (b.amp * h) * amplitudeBoost;
+                        const y = baseY + yOffset + Math.sin(xNorm * Math.PI) * (b.thickness * h * 0.2);
+                        if (s === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.strokeStyle = `hsla(${b.hue} ${b.sat}% 60% / ${b.alpha})`;
+                    ctx.lineWidth = Math.max(2, (isMobile ? 3 : 4));
+                    ctx.stroke();
+
+                    // Glow overlay
+                    ctx.strokeStyle = `hsla(${b.hue} ${b.sat}% 65% / ${(b.alpha * 0.7).toFixed(3)})`;
+                    ctx.lineWidth = Math.max(6, (isMobile ? 12 : 18));
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.stroke();
+                    ctx.globalCompositeOperation = 'source-over';
+                }
+            }
+
+            function step(now){
+                if (now - last < (1000 / maxFPS - 2)) { rafId = requestAnimationFrame(step); return; }
+                last = now;
+
+                ctx.clearRect(0,0,w,h);
+                drawBackground();
+                if (!prefersReduced) drawAurora();
+                t += 0.016; // time progression
+
+                rafId = requestAnimationFrame(step);
+            }
+
+            if (!prefersReduced) {
+                rafId = requestAnimationFrame(step);
+            }
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) cancelAnimationFrame(rafId);
+                else if (!prefersReduced) rafId = requestAnimationFrame(step);
+            });
+        })();
+
+        // Handle background video
+        const video = document.getElementById('bg-video');
+        const fallback = document.getElementById('bg-fallback');
+        
+        if (video && fallback) {
+            let hasStarted = false;
+
+            const markStarted = () => {
+                if (!hasStarted) {
+                    hasStarted = true;
+                    fallback.style.display = 'none';
+                    videoIsPlaying = true;
+                }
+            };
+
+            // Listen for video events
+            video.addEventListener('loadeddata', () => {
+                console.log('Video loaded');
+            });
+            
+            video.addEventListener('canplay', () => {
+                console.log('Video can play');
+                if (!hasStarted) {
+                    video.play().then(markStarted).catch(e => {
+                        console.log('Autoplay failed:', e);
+                    });
+                }
+            });
+            
+            video.addEventListener('playing', markStarted);
+            
+            video.addEventListener('error', (e) => {
+                console.error('Video error:', e);
+            });
+        }
+
+        // Check for redirect result on page load
+        (async function checkRedirectResult() {
+            try {
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
+                const { getAuth, getRedirectResult } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+                
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                
+                const result = await getRedirectResult(auth);
+                if (result && result.user) {
+                    console.log('Redirect sign-in successful:', result.user.email);
+                    
+                    // Store user info in localStorage
+                    localStorage.setItem('user', JSON.stringify({
+                        name: result.user.displayName,
+                        email: result.user.email,
+                        photo: result.user.photoURL
+                    }));
+                    
+                    // Redirect to welcome page
+                    window.location.href = 'welcome.html';
+                }
+            } catch (error) {
+                console.log('No redirect result or error:', error);
+            }
+        })();
+
+        const googleSignInBtn = document.getElementById('google-signin-btn');
+        
+        // Test if button exists and is clickable
+        if (!googleSignInBtn) {
+            console.error('Google sign-in button not found!');
+        } else {
+            console.log('Google sign-in button found');
+        }
+
+        // Simple test click handler first
+        googleSignInBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('BUTTON CLICKED - Event fired successfully');
+            alert('Button click detected! Now trying Firebase...');
+            
+            // Simple Firebase test
+            signInWithGoogle();
+        });
+        
+        async function signInWithGoogle() {
+            try {
+                console.log('Starting Firebase sign-in process...');
+                
+                // Load Firebase
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
+                const { getAuth, GoogleAuthProvider, signInWithRedirect } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+                
+                console.log('Firebase loaded successfully');
+                
+                // Initialize Firebase
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const provider = new GoogleAuthProvider();
+                
+                console.log('Firebase initialized, starting redirect...');
+                
+                // Use redirect method (more reliable)
+                await signInWithRedirect(auth, provider);
+                
+            } catch (error) {
+                console.error('Firebase error:', error);
+                alert('Firebase error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

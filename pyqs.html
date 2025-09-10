@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-17524250047"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-17524250047');
+</script>
+    <!-- Authentication Check -->
+    <script type="module" src="auth-check.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.E 1st Year PYQs (OU)</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(to right, #f0f4f8, #d9e2ec);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1b262c;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .semester {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            animation: slideUp 0.8s ease forwards;
+        }
+
+        .semester:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+        }
+
+        .semester-header {
+            padding: 20px;
+            background: linear-gradient(45deg, #3f72af, #112d4e);
+            color: #fff;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .semester-content {
+            max-height: none; /* Expanded by default */
+            overflow: hidden;
+            padding: 20px;
+            transition: max-height 0.5s ease, padding 0.5s ease;
+            background: #f1f6f9;
+        }
+
+        .semester-content ul {
+            list-style: none;
+        }
+
+        .semester-content ul li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: #e0e7ff;
+            border-left: 5px solid #3f72af;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .semester-content ul li:hover {
+            transform: translateX(10px);
+            background: #dbeafe;
+        }
+
+        .fa-chevron-down {
+            transition: transform 0.3s ease;
+        }
+
+        .active .fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>B.E CSE,AIDS, CIVIL-1st Year (OU)</h1>
+    <h1>PYQ'S</h1>
+
+    <div class="container">
+
+        <!-- Semester 1 -->
+        <div class="semester active" onclick="toggleSemester(this)">
+            <div class="semester-header">
+                Semester 1
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="semester-content">
+                <ul>
+                    <li>Mathematics-I PYQs</li>
+                    <li>C-Programming PYQs</li>
+                    <li>Chemistry PYQs</li>
+                    <li>Environmental Science (EVS) PYQs</li>
+                    <li>Essence Of Indian Traditional Knowledge System (EITKS) PYQs</li>
+                    <li>Engineering Mechanics-I PYQs</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Semester 2 -->
+        <div class="semester active" onclick="toggleSemester(this)">
+            <div class="semester-header">
+                Semester 2
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="semester-content">
+                <ul>
+                    <li>Mathematics-II PYQs</li>
+                    <li>Engineering PhysicsPYQs</li>
+                    <li>Basic Electrical Engineering (BEE) PYQs</li>
+                      <li>English PYQs</li>
+                    <li>Indian Constitution PYQs</li>
+                        <li>Engineering Mechanics-II PYQs</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function toggleSemester(semester) {
+            const content = semester.querySelector('.semester-content');
+            semester.classList.toggle('active');
+
+            if(content.style.maxHeight && content.style.maxHeight !== 'none') {
+                content.style.maxHeight = null;
+                content.style.padding = '0 20px';
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                content.style.padding = '20px';
+            }
+        }
+    </script>
+    
+</body>
+</html>
+

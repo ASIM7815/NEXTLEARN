@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - ASIMSAADZ</title>
+    <!-- Authentication Check -->
+    <script type="module" src="auth-check.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #bg-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+        }
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+        }
+        .card-container {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .google-button {
+            transition: all 0.3s ease;
+        }
+        .google-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.3);
+        }
+        .message-box {
+            background-color: #fefefe;
+            color: #4a5568;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-black">
+    <video autoplay loop muted playsinline id="bg-video">
+        <source src="https://storage.cloud.google.com/asimsaadz/butterfly.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="video-overlay"></div>
+
+    <!-- Sign-in section (shown when not authenticated) -->
+    <div id="signin-section" class="flex items-center justify-center min-h-screen p-4 relative z-10">
+        <div class="w-full max-w-sm mx-auto overflow-hidden text-center">
+            
+            <div id="signin-card" class="bg-white/20 card-container rounded-2xl shadow-2xl p-8 md:p-10">
+                <div class="mb-8">
+                    <img src="asimsaad.png" alt="ASIMSAADZ Logo" class="mx-auto h-16 w-auto mb-4 rounded-lg">
+                    <h1 class="text-3xl font-bold text-white">Welcome to ASIMSAADZ</h1>
+                    <p class="text-indigo-100 mt-2">Sign in to continue.</p>
+                </div>
+                
+                <div id="message-container" class="hidden">
+                    <div class="message-box">
+                        <p id="message-text" class="font-medium mb-4"></p>
+                        <button id="try-again-btn" class="google-button w-full inline-flex items-center justify-center bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg shadow-lg focus:outline-none focus:ring-4 focus:ring-gray-300">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+
+                <button id="google-signin-btn" 
+                   class="google-button w-full inline-flex items-center justify-center bg-white text-gray-700 font-medium py-3 px-4 rounded-lg shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48">
+                        <path fill="#4285F4" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                        <path fill="#34A853" d="M43.611,20.083L43.595,20L42,20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l0.002-0.002l5.657,5.657C40.074,36.316,44,30.824,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                        <path fill="#FBBC05" d="M10.21,28.641l5.657,5.657C17.93,36.888,20.803,38,24,38c3.197,0,6.07-1.112,8.21-2.9l-5.657-5.657C25.5,29.608,24.789,30,24,30C20.44,30,17.222,28.32,15.25,25.8l-5.04,3.841C11.373,26.425,10.66,27.524,10.21,28.641z"></path>
+                        <path fill="#EA4335" d="M24,16c-1.898,0-3.64,0.73-4.95,2.05l-5.657-5.657C15.96,10.193,19.758,8,24,8c5.268,0,10.046,2.053,13.571,6.021l-5.657,5.657C30.151,17.154,27.359,16,24,16z"></path>
+                    </svg>
+                    Sign in with Google
+                </button>
+
+                <div class="text-center text-xs text-indigo-200 mt-8">
+                    <p>By signing in, you agree to our</p>
+                    <p><a href="#" class="font-medium hover:underline">Terms of Service</a> & <a href="#" class="font-medium hover:underline">Privacy Policy</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content section (shown when authenticated) -->
+    <div id="main-content" class="hidden min-h-screen relative z-10">
+        <!-- Header with sign-out button -->
+        <header class="bg-transparent text-white sticky top-0 z-50 p-4">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <img src="asimsaad.png" alt="ASIMSAADZ Logo" class="h-12 w-auto rounded-lg">
+                    <span class="text-xl font-bold">ASIMSAADZ</span>
+                </div>
+                <button id="sign-out-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-300">
+                    Sign Out
+                </button>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="container mx-auto px-4 py-16">
+            <div class="text-center text-white">
+                <h1 class="text-4xl md:text-6xl font-bold mb-8">Welcome to ASIMSAADZ</h1>
+                <p class="text-xl mb-8">You have successfully signed in!</p>
+                
+                <!-- Add your main content here -->
+                <div class="bg-white/10 card-container rounded-2xl p-8 max-w-4xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-4">Your Dashboard</h2>
+                    <p class="text-gray-300 mb-6">This is your main content area. You can add any content you want here.</p>
+                    
+                    <!-- Example content cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+                        <div class="bg-white/5 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold mb-2">Feature 1</h3>
+                            <p class="text-gray-400">Description of your first feature</p>
+                        </div>
+                        <div class="bg-white/5 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold mb-2">Feature 2</h3>
+                            <p class="text-gray-400">Description of your second feature</p>
+                        </div>
+                        <div class="bg-white/5 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold mb-2">Feature 3</h3>
+                            <p class="text-gray-400">Description of your third feature</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+<script type="module">
+  // Import Firebase modules
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { 
+    getAuth, 
+    onAuthStateChanged,
+    GoogleAuthProvider, 
+    signInWithPopup,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyD2nIB45KU_b4d7ggIP-ZKDIk82UY1ElJ8",
+    authDomain: "asimsaadz-db8a5.firebaseapp.com",
+    projectId: "asimsaadz-db8a5",
+    storageBucket: "asimsaadz-db8a5.appspot.com",
+    messagingSenderId: "201921568991",
+    appId: "1:201921568991:web:46e4a57cd2bee11f3bc96a",
+    measurementId: "G-P9NDKNYZFL"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  const googleSignInBtn = document.getElementById('google-signin-btn');
+  const tryAgainBtn = document.getElementById('try-again-btn');
+  const messageContainer = document.getElementById('message-container');
+  const messageText = document.getElementById('message-text');
+  const signinSection = document.getElementById('signin-section');
+  const mainContent = document.getElementById('main-content');
+  const signOutBtn = document.getElementById('sign-out-btn');
+
+  function showMessage(message) {
+    messageText.textContent = message;
+    messageContainer.classList.remove('hidden');
+    googleSignInBtn.style.display = 'none';
+  }
+
+  function resetUI() {
+    messageContainer.classList.add('hidden');
+    googleSignInBtn.style.display = 'inline-flex';
+  }
+
+  function showMainContent() {
+    signinSection.classList.add('hidden');
+    mainContent.classList.remove('hidden');
+  }
+
+  function showSigninContent() {
+    signinSection.classList.remove('hidden');
+    mainContent.classList.add('hidden');
+  }
+
+  googleSignInBtn.addEventListener('click', () => {
+    signInWithPopup(auth, provider).catch((error) => {
+        if (error.code === 'auth/popup-closed-by-user') {
+            showMessage('Sign-in process cancelled. Please try again.');
+        } else {
+            showMessage('Sorry, we could not sign you in. Please try again.');
+        }
+    });
+  });
+
+  tryAgainBtn.addEventListener('click', () => {
+    resetUI();
+  });
+
+  signOutBtn.addEventListener('click', () => {
+    signOut(auth).then(() => {
+      showSigninContent();
+    }).catch((error) => {
+      console.error('Error signing out:', error);
+    });
+  });
+
+  // Listen for authentication state changes
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+        // User is authenticated - show main content
+        showMainContent();
+    } else {
+        // User is not authenticated - show sign-in form
+        showSigninContent();
+    }
+  });
+</script>
+</body>
+</html>
+
