@@ -980,9 +980,9 @@
         }
 
         // Validate file type
-        const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+        const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/avi'];
         if (!validTypes.includes(file.type)) {
-            showCustomAlert('Please upload a valid video file (MP4, WebM, or MOV).');
+            showCustomAlert('Please upload a valid video file (MP4, WebM, MOV, or AVI).');
             return;
         }
 
@@ -993,110 +993,77 @@
             return;
         }
 
-        // Get the base URL (handles both localhost and production)
-        const YOUR_BACKEND_SERVER_URL = window.location.origin;
+        const SERVER_URL = window.location.origin;
         
         uploadBtn.disabled = true;
-        uploadBtn.textContent = 'Preparing...';
+        uploadBtn.textContent = 'Uploading...';
         progressContainer.style.display = 'block';
         progressBarInner.style.width = '0%';
-        uploadStatus.textContent = 'Initializing upload...';
+        uploadStatus.textContent = 'Preparing upload...';
         
         console.log('📤 Starting upload process', {
             fileName: file.name,
             fileType: file.type,
-            fileSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-            apiEndpoint: `${YOUR_BACKEND_SERVER_URL}/api/generate-upload-url`
+            fileSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`
         });
 
         try {
-            // --- STEP 1: Get a secure "signed" URL from your backend ---
-            uploadStatus.textContent = 'Requesting upload URL...';
-            console.log('🔗 Requesting signed URL from server...');
-            
-            const response = await fetch(`${YOUR_BACKEND_SERVER_URL}/api/generate-upload-url`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    fileName: file.name,
-                    fileType: file.type,
-                    fileSize: file.size
-                }),
-            });
-            
-            console.log('📡 Server response status:', response.status);
+            // Create FormData for file upload
+            const formData = new FormData();
+            formData.append('video', file);
+            formData.append('title', title.trim());
+            formData.append('description', description || '');
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('❌ Server error:', errorData);
-                throw new Error(errorData.error || 
-                    `Server returned ${response.status}: ${response.statusText}. ` +
-                    'Make sure the server is running and the URL is correct.');
-            }
-
-            const { uploadUrl, fileKey } = await response.json();
-
-            // --- STEP 2: Upload the file directly to your bucket using the signed URL ---
-            // We use XMLHttpRequest here because it has a built-in progress event.
+            // Upload using XMLHttpRequest for progress tracking
             const xhr = new XMLHttpRequest();
-            xhr.open('PUT', uploadUrl, true);
-            xhr.setRequestHeader('Content-Type', file.type);
-
-            xhr.upload.onprogress = (event) => {
+            
+            xhr.upload.addEventListener('progress', (event) => {
                 if (event.lengthComputable) {
                     const percentComplete = (event.loaded / event.total) * 100;
                     progressBarInner.style.width = percentComplete + '%';
                     uploadStatus.textContent = `Uploading... ${Math.round(percentComplete)}%`;
                 }
-            };
-            
-            xhr.onload = async () => {
+            });
+
+            xhr.addEventListener('load', () => {
                 if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
                     uploadStatus.textContent = '✅ Upload Complete!';
                     uploadBtn.textContent = 'Done!';
-
-                    // --- STEP 3: Tell your backend the upload is done ---
-                    // This saves the video's title, description, and fileKey to display in My Videos
-                    await fetch(`${YOUR_BACKEND_SERVER_URL}/api/upload-complete`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ fileKey, title, description })
-                    });
-
-                    console.log(`File uploaded successfully. You can access it via key: ${fileKey}`);
-
+                    
+                    console.log('Upload successful:', response);
+                    showCustomAlert('Video uploaded successfully! It will appear in the community section shortly.');
+                    
                     setTimeout(() => {
                         uploadModal.style.display = 'none';
                         resetUploadForm();
+                        // Refresh home page to show new video
+                        if (homePageContent.style.display !== 'none') {
+                            fetchCommunityVideos();
+                        }
                     }, 2000);
-
                 } else {
-                     throw new Error(`Upload failed with status: ${xhr.status}`);
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    throw new Error(errorResponse.error || `Upload failed with status: ${xhr.status}`);
                 }
-            };
-            
-            xhr.onerror = (e) => {
-                console.error('❌ Upload error:', e);
-                throw new Error('Network error during file transfer. Please check your connection.');
-            };
-            
-            xhr.ontimeout = () => {
-                console.error('⌛ Upload timed out');
-                throw new Error('Upload timed out. Please try again with a smaller file or better connection.');
-            };
-            
-            xhr.timeout = 300000; // 5 minute timeout
+            });
 
-            xhr.send(file);
+            xhr.addEventListener('error', () => {
+                throw new Error('Network error during upload. Please check your connection and try again.');
+            });
+
+            xhr.addEventListener('timeout', () => {
+                throw new Error('Upload timed out. Please try again with a smaller file or better connection.');
+            });
+
+            xhr.timeout = 300000; // 5 minute timeout
+            xhr.open('POST', `${SERVER_URL}/api/upload`);
+            xhr.send(formData);
 
         } catch (error) {
             console.error('Upload error:', error);
-            showCustomAlert(`Upload failed: ${error.message}. Please check your backend server and console for details.`);
-            uploadStatus.textContent = `Upload failed. Please try again.`;
+            showCustomAlert(`Upload failed: ${error.message}`);
+            uploadStatus.textContent = 'Upload failed. Please try again.';
             uploadBtn.disabled = false;
             uploadBtn.textContent = 'Upload';
             progressBarInner.style.width = '0%';

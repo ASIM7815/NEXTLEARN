@@ -1,228 +1,186 @@
-# Educational Video Platform - Setup Guide
+# EduTube - Video Upload Platform
 
-# 🎥 YouTube-Like Video Platform
+A YouTube-like platform where users can upload, view, and manage videos.
 
-A full-featured video sharing platform that allows users to upload, view, and manage videos. Built with Node.js, Express, and Google Cloud Storage.
+## Features
 
-## ✨ Features
+- 📹 Video upload with drag & drop support
+- 🖼️ Automatic thumbnail generation
+- 📱 Responsive design for mobile and desktop
+- 🔍 Search functionality (YouTube integration)
+- 👥 Community video sharing
+- 📊 View tracking
+- 🗑️ Video management (delete videos)
 
-- **Video Upload**: Upload videos up to 100MB with drag-and-drop support
-- **Video Streaming**: Stream videos directly from Google Cloud Storage
-- **Video Management**: View, delete, and organize your uploaded videos
-- **Community Videos**: Browse all videos uploaded by users
-- **Search Functionality**: Search through available videos
-- **Responsive Design**: Works on desktop and mobile devices
-- **View Counter**: Track video views automatically
-- **Real-time Updates**: Videos appear immediately after upload
+## Quick Start
 
-## 🚀 Quick Start
+### 1. Install Dependencies
 
-### Prerequisites
-- Node.js (v14 or higher)
-- Google Cloud Storage account and bucket
-- Google Cloud Service Account credentials
+Make sure you have Node.js installed (version 14 or higher), then run:
 
-### Installation
-
-1. **Clone or download** this project to your local machine
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Run setup script**:
-   ```bash
-   npm run setup
-   ```
-
-4. **Configure Google Cloud Storage**:
-   - Update `./config/gcs-config.json` with your service account credentials
-   - Copy `.env.example` to `.env` and update the settings
-
-5. **Start the server**:
-   ```bash
-   npm start
-   ```
-
-6. **Open your browser** and go to `http://localhost:3000`
-
-## 🔧 Configuration
-
-### Google Cloud Storage Setup
-
-1. **Create a Google Cloud Project**
-2. **Create a Storage Bucket**
-3. **Create a Service Account** with Storage Admin permissions
-4. **Download the service account key** as JSON
-5. **Update** `./config/gcs-config.json` with your credentials
-6. **Set your bucket name** in `.env` file
-
-### Environment Variables
-
-Copy `.env.example` to `.env` and configure:
-
-```env
-PORT=3000
-GCS_BUCKET_NAME=your-bucket-name
-GCS_PROJECT_ID=your-project-id
-GOOGLE_APPLICATION_CREDENTIALS=./config/gcs-config.json
-MAX_FILE_SIZE=100MB
+```bash
+npm install
 ```
 
-## 📁 Project Structure
+### 2. Start the Server
 
-```
-problemsbreakerz/
-├── server.js              # Main server file
-├── searchbar.html          # Frontend application
-├── package.json           # Dependencies and scripts
-├── setup.js              # Setup script
-├── data/
-│   └── videos.json       # Video database
-├── config/
-│   └── gcs-config.json   # Google Cloud Storage config
-├── uploads/              # Temporary upload directory
-└── temp/                # Temporary files
+```bash
+npm start
 ```
 
-## 🎯 Usage
-
-### Uploading Videos
-
-1. **Click "Upload Video"** button or drag files to the upload area
-2. **Select video file** (supported formats: MP4, AVI, MOV, WMV, FLV, WebM)
-3. **Add title and description** (optional)
-4. **Click "Upload"** and wait for completion
-5. **Video appears** in "My Videos" and community section
-
-### Viewing Videos
-
-- **Browse** community videos on the home page
-- **Search** for specific videos using the search bar
-- **Click** on any video thumbnail to play
-- **View count** increases automatically
-
-### Managing Videos
-
-- **View your videos** in the "My Videos" section
-- **Delete videos** using the delete button
-- **Edit details** (coming soon)
-
-## 🛠️ API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Main application page |
-| POST | `/upload` | Upload video file |
-| GET | `/videos` | Get all videos |
-| GET | `/my-videos` | Get user's videos |
-| DELETE | `/videos/:id` | Delete specific video |
-| POST | `/videos/:id/view` | Increment view count |
-
-## 🔒 Security Features
-
-- **File type validation** - Only video files allowed
-- **File size limits** - Configurable max upload size
-- **CORS protection** - Cross-origin request security
-- **Input sanitization** - Prevents malicious uploads
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Videos not uploading?**
-- Check Google Cloud Storage credentials
-- Verify bucket permissions
-- Check file size limits
-
-**Videos not playing?**
-- Ensure bucket is publicly accessible
-- Check video format compatibility
-- Verify CORS settings on GCS bucket
-
-**Server won't start?**
-- Check if port 3000 is available
-- Verify all dependencies are installed
-- Check Node.js version (v14+ required)
-
-### Getting Help
-
-1. Check the console for error messages
-2. Verify your `.env` configuration
-3. Test Google Cloud Storage connection
-4. Check network connectivity
-
-## 📝 Development
-
-### Running in Development Mode
+Or for development with auto-restart:
 
 ```bash
 npm run dev
 ```
 
-This uses nodemon for automatic server restarts.
+### 3. Open Your Browser
 
-### Adding New Features
-
-The platform is designed to be easily extensible:
-- Add new API endpoints in `server.js`
-- Modify the frontend in `searchbar.html`
-- Update database schema in `data/videos.json`
-
-## 🤝 Contributing
-
-Feel free to submit issues and enhancement requests!
-
-## 📄 License
-
-This project is open source and available under the MIT License.
-
-## Features
-- 🎥 YouTube video search and playback
-- 📤 Video upload to Google Cloud Storage
-- 🎙️ Voice search functionality
-- 📱 Mobile responsive design
-- 🌊 Interactive background effects
-
-## Quick Setup
-
-### 1. Install Dependencies
-```bash
-npm install
-```
-
-### 2. Google Cloud Setup
-1. Create a Google Cloud project
-2. Enable the Cloud Storage API
-3. Create a service account with Storage Admin permissions
-4. Download the service account key as `service-account-key.json`
-5. Create a storage bucket named `asimsaadz` (or update the bucket name in `server.js`)
-
-### 3. Update Configuration
-- Replace `your-project-id` in `server.js` with your actual Google Cloud project ID
-- Ensure your YouTube API key is set in `searchbar.html`
-
-### 4. Run the Server
-```bash
-npm start
-```
-
-The platform will be available at `http://localhost:3000`
+Navigate to: `http://localhost:3000`
 
 ## File Structure
-- `searchbar.html` - Main platform interface
-- `server.js` - Backend server for Google Cloud Storage integration
-- `index.html` - Landing page with Google sign-in
-- `welcome.html` - Interactive welcome page with thunder effects
+
+```
+NEXTLEARN/
+├── server.js          # Backend server
+├── searchbar.html     # Frontend application
+├── package.json       # Dependencies
+├── uploads/           # Uploaded files (auto-created)
+│   ├── videos/        # Video files
+│   └── thumbnails/    # Generated thumbnails
+└── data/              # Database files (auto-created)
+    └── videos.json    # Video metadata
+```
 
 ## Usage
-1. Navigate to the platform
-2. Search for educational videos using the search bar or voice search
-3. Upload your own videos using the Upload button
-4. View your uploaded videos in the "My Videos" section
 
-## Security Notes
-- The API key in the frontend should be replaced with environment variables in production
-- Service account keys should be kept secure and not committed to version control
-- Consider implementing proper authentication for production use
+### Uploading Videos
+
+1. Click the "Upload" button in the navigation
+2. Drag & drop a video file or click to select
+3. Enter a title (required) and description (optional)
+4. Click "Upload" and wait for completion
+5. Video will appear in the "Community Videos" section
+
+### Supported Formats
+
+- MP4 (recommended)
+- WebM
+- QuickTime (MOV)
+- AVI
+
+### File Size Limit
+
+- Maximum: 100MB per video
+
+### Features Available
+
+- **Home**: View community videos and YouTube content
+- **Search**: Search YouTube videos (requires API key)
+- **Upload**: Upload your own videos
+- **Browse**: View all community videos
+- **My Videos**: Manage your uploaded videos
+
+## Configuration
+
+### YouTube API (Optional)
+
+To enable YouTube search functionality:
+
+1. Get a YouTube Data API v3 key from Google Cloud Console
+2. Replace `YOUR_API_KEY_HERE` in `searchbar.html` with your actual API key
+
+### Storage
+
+Videos are stored locally in the `uploads/` directory. For production:
+
+- Consider using cloud storage (AWS S3, Google Cloud Storage)
+- Implement user authentication
+- Add a proper database (PostgreSQL, MongoDB)
+
+## Development
+
+### Adding Features
+
+The codebase is modular and easy to extend:
+
+- **Backend**: Modify `server.js` for new API endpoints
+- **Frontend**: Update `searchbar.html` for UI changes
+- **Storage**: Currently uses local files, easily replaceable
+
+### Database
+
+Currently uses JSON file storage. To upgrade:
+
+1. Install database driver (e.g., `pg` for PostgreSQL)
+2. Replace file operations in `server.js`
+3. Create proper tables/collections
+
+## Production Deployment
+
+### Environment Variables
+
+Set these for production:
+
+- `PORT`: Server port (default: 3000)
+- `NODE_ENV`: Set to "production"
+
+### Nginx Configuration (Optional)
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    
+    location /uploads/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Upload fails**: Check server logs, ensure write permissions
+2. **Thumbnails not generating**: FFmpeg installation required
+3. **Large files timeout**: Increase timeout settings
+4. **CORS errors**: Server handles CORS, check network
+
+### Logs
+
+Server logs show:
+- Upload success/failure
+- File operations
+- Error details
+
+## Security Considerations
+
+For production use:
+
+- [ ] Add user authentication
+- [ ] Implement file type validation
+- [ ] Add virus scanning
+- [ ] Rate limiting for uploads
+- [ ] Input sanitization
+- [ ] HTTPS enforcement
+
+## License
+
+MIT License - Feel free to modify and distribute.
+
+## Support
+
+If you encounter issues:
+
+1. Check server logs in the terminal
+2. Verify file permissions in `uploads/` directory
+3. Ensure all dependencies are installed
+4. Check browser console for frontend errors
