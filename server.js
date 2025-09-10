@@ -19,17 +19,25 @@ app.use(cors());
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
-// Create necessary directories
+// Create necessary directories for local storage
 const uploadsDir = path.join(__dirname, 'uploads');
 const videosDir = path.join(uploadsDir, 'videos');
 const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
 const dataDir = path.join(__dirname, 'data');
 
+// Ensure all directories exist
 [uploadsDir, videosDir, thumbnailsDir, dataDir].forEach(dir => {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
+        console.log(`📁 Created directory: ${dir}`);
     }
 });
+
+// Log storage locations
+console.log('📂 Local Storage Configuration:');
+console.log(`   Videos: ${videosDir}`);
+console.log(`   Thumbnails: ${thumbnailsDir}`);
+console.log(`   Database: ${path.join(dataDir, 'videos.json')}`);
 
 // Serve static files
 app.use('/uploads', express.static(uploadsDir));
@@ -288,6 +296,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'searchbar.html'));
 });
 
+// Serve the storage manager page
+app.get('/storage', (req, res) => {
+    res.sendFile(path.join(__dirname, 'storage-manager.html'));
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ 
@@ -295,6 +308,46 @@ app.get('/api/health', (req, res) => {
         message: 'EduTube backend is running',
         videosCount: videosDatabase.length 
     });
+});
+
+// Storage info endpoint
+app.get('/api/storage-info', (req, res) => {
+    try {
+        let totalSize = 0;
+        let videoCount = 0;
+        
+        // Calculate total storage used
+        if (fs.existsSync(videosDir)) {
+            const files = fs.readdirSync(videosDir);
+            files.forEach(file => {
+                const filePath = path.join(videosDir, file);
+                const stats = fs.statSync(filePath);
+                totalSize += stats.size;
+                videoCount++;
+            });
+        }
+        
+        res.json({
+            storageLocation: {
+                videos: videosDir,
+                thumbnails: thumbnailsDir,
+                database: path.join(dataDir, 'videos.json')
+            },
+            usage: {
+                totalVideos: videoCount,
+                totalSizeBytes: totalSize,
+                totalSizeMB: Math.round(totalSize / (1024 * 1024) * 100) / 100,
+                totalSizeGB: Math.round(totalSize / (1024 * 1024 * 1024) * 100) / 100
+            },
+            limits: {
+                maxFileSizeMB: 100,
+                supportedFormats: ['MP4', 'WebM', 'QuickTime', 'AVI']
+            }
+        });
+    } catch (error) {
+        console.error('Error getting storage info:', error);
+        res.status(500).json({ error: 'Failed to get storage information' });
+    }
 });
 
 // Error handling middleware
