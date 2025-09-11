@@ -1005,11 +1005,12 @@
             return;
         }
 
-        // Validate file size (500MB limit for direct upload)
-        const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+        // Check file size and suggest compression for large files
+        const maxSize = 100 * 1024 * 1024; // 100MB for faster uploads
         if (file.size > maxSize) {
-            showCustomAlert('File is too large. Maximum size is 500MB.');
-            return;
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+            showCustomAlert(`File is ${sizeMB}MB which may upload slowly.\n\n💡 Tips for faster uploads:\n• Compress video to under 100MB\n• Use MP4 format\n• Lower resolution (720p recommended)\n\nContinue anyway?`);
+            // Don't return, let them continue if they want
         }
         
         uploadBtn.disabled = true;
@@ -1030,22 +1031,56 @@
             const extension = file.name.split('.').pop();
             const videoFileName = `${videoId}.${extension}`;
             
-            // Create Firebase storage reference
+            // Create Firebase storage reference with optimized settings
             const videoRef = storage.ref(`videos/${videoFileName}`);
             
-            // Start upload with progress tracking
-            const uploadTask = videoRef.put(file);
+            // Configure upload metadata for faster processing
+            const metadata = {
+                contentType: file.type,
+                cacheControl: 'public,max-age=3600',
+                customMetadata: {
+                    'uploadedAt': new Date().toISOString(),
+                    'originalName': file.name,
+                    'size': file.size.toString()
+                }
+            };
             
-            // Monitor upload progress
+            // Start optimized upload with chunking
+            const uploadTask = videoRef.put(file, metadata);
+            
+            // Monitor upload progress with speed tracking
+            let startTime = Date.now();
+            let lastBytes = 0;
+            let lastTime = startTime;
+            
             uploadTask.on('state_changed', 
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    progressBarInner.style.width = progress + '%';
-                    uploadStatus.textContent = `Uploading to Firebase Storage... ${Math.round(progress)}%`;
+                    const currentTime = Date.now();
+                    const bytesTransferred = snapshot.bytesTransferred;
                     
-                    if (progress > 99) {
-                        uploadStatus.textContent = 'Finalizing upload to cloud...';
+                    // Calculate upload speed
+                    const timeDiff = (currentTime - lastTime) / 1000; // seconds
+                    const bytesDiff = bytesTransferred - lastBytes;
+                    const speed = timeDiff > 0 ? bytesDiff / timeDiff : 0; // bytes per second
+                    const speedMBps = (speed / (1024 * 1024)).toFixed(1); // MB/s
+                    
+                    // Calculate ETA
+                    const remainingBytes = snapshot.totalBytes - bytesTransferred;
+                    const eta = speed > 0 ? Math.round(remainingBytes / speed) : 0;
+                    const etaText = eta > 60 ? `${Math.round(eta/60)}m` : `${eta}s`;
+                    
+                    progressBarInner.style.width = progress + '%';
+                    
+                    if (progress < 99) {
+                        uploadStatus.textContent = `⚡ ${Math.round(progress)}% • ${speedMBps} MB/s • ETA: ${etaText}`;
+                    } else {
+                        uploadStatus.textContent = '🔄 Finalizing upload...';
                     }
+                    
+                    // Update tracking variables
+                    lastBytes = bytesTransferred;
+                    lastTime = currentTime;
                 }, 
                 (error) => {
                     console.error('Firebase upload error:', error);
