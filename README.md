@@ -1,16 +1,18 @@
 # EduTube - Video Upload Platform
 
-A YouTube-like platform where users can upload, view, and manage videos.
+A YouTube-like platform where users can upload, view, and manage videos using Firebase Storage.
 
 ## Features
 
 - 📹 Video upload with drag & drop support
-- 🖼️ Automatic thumbnail generation
+- � Firebase Storage integration for cloud hosting
+- �🖼️ Automatic thumbnail generation
 - 📱 Responsive design for mobile and desktop
 - 🔍 Search functionality (YouTube integration)
 - 👥 Community video sharing
 - 📊 View tracking
 - 🗑️ Video management (delete videos)
+- 🌐 Global CDN for fast video delivery
 
 ## Quick Start
 
@@ -42,14 +44,25 @@ Navigate to: `http://localhost:3000`
 
 ```
 NEXTLEARN/
-├── server.js          # Backend server
-├── searchbar.html     # Frontend application
-├── package.json       # Dependencies
-├── uploads/           # Uploaded files (auto-created)
-│   ├── videos/        # Video files
-│   └── thumbnails/    # Generated thumbnails
-└── data/              # Database files (auto-created)
-    └── videos.json    # Video metadata
+├── server.js              # Backend server
+├── searchbar.html         # Frontend application
+├── package.json           # Dependencies
+├── firebase-config.js     # Firebase backend configuration
+├── firebase-frontend.js   # Firebase frontend configuration
+├── FIREBASE_SETUP.md      # Firebase setup instructions
+├── temp/                  # Temporary files (auto-created)
+└── data/                  # Database files (auto-created)
+    └── videos.json        # Video metadata
+```
+
+**Firebase Storage Structure:**
+```
+Firebase Storage Bucket:
+├── videos/
+│   ├── {videoId}.mp4
+│   └── {videoId}.webm
+└── thumbnails/
+    └── {videoId}_thumbnail.png
 ```
 
 ## Usage
@@ -92,11 +105,17 @@ To enable YouTube search functionality:
 
 ### Storage
 
-Videos are stored locally in the `uploads/` directory. For production:
+Videos are stored in **Firebase Storage** with these benefits:
 
-- Consider using cloud storage (AWS S3, Google Cloud Storage)
-- Implement user authentication
-- Add a proper database (PostgreSQL, MongoDB)
+- ✅ **Global CDN**: Fast loading worldwide
+- ✅ **Unlimited scalability**: Handle any number of uploads
+- ✅ **Automatic backups**: Google handles redundancy
+- ✅ **Cost-effective**: Pay only for usage
+- ✅ **Enterprise security**: Google-grade protection
+
+For enhanced features:
+- Implement user authentication with Firebase Auth
+- Add a proper database (Firestore, PostgreSQL, MongoDB)
 
 ## Development
 

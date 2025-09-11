@@ -103,7 +103,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📁 EduTube Local Storage Manager</h1>
+        <h1>� EduTube Firebase Storage Manager</h1>
         
         <div id="status" class="status hidden"></div>
         
@@ -151,20 +151,29 @@
             
             storageInfoDiv.innerHTML = `
                 <div class="info-card">
-                    <h3>📹 Videos Storage</h3>
-                    <p><strong>Location:</strong></p>
-                    <p class="path">${data.storageLocation.videos}</p>
+                    <h3>� Firebase Storage</h3>
+                    <p><strong>Storage Type:</strong> ${data.storageType || 'Firebase Storage'}</p>
+                    <p><strong>Bucket:</strong></p>
+                    <p class="path">${data.storageLocation.bucket}</p>
                     <p><strong>Total Videos:</strong> ${data.usage.totalVideos}</p>
+                    <p><strong>Public Access:</strong> ${data.firebaseInfo?.publicAccess ? 'Enabled' : 'Disabled'}</p>
                 </div>
                 
                 <div class="info-card">
-                    <h3>🖼️ Thumbnails Storage</h3>
-                    <p><strong>Location:</strong></p>
+                    <h3>� Videos Location</h3>
+                    <p><strong>Firebase Path:</strong></p>
+                    <p class="path">${data.storageLocation.videos}</p>
+                    <p><strong>CDN Enabled:</strong> ${data.firebaseInfo?.cdnEnabled ? 'Yes' : 'No'}</p>
+                </div>
+                
+                <div class="info-card">
+                    <h3>�🖼️ Thumbnails Location</h3>
+                    <p><strong>Firebase Path:</strong></p>
                     <p class="path">${data.storageLocation.thumbnails}</p>
                 </div>
                 
                 <div class="info-card">
-                    <h3>🗄️ Database</h3>
+                    <h3>🗄️ Local Database</h3>
                     <p><strong>Location:</strong></p>
                     <p class="path">${data.storageLocation.database}</p>
                     <p><strong>Records:</strong> ${data.usage.totalVideos}</p>

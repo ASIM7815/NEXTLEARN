@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const sharp = require('sharp');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegStatic = require('ffmpeg-static');
+const { bucket } = require('./firebase-config');
 
 // Set FFmpeg path
 ffmpeg.setFfmpegPath(ffmpegStatic);
@@ -19,24 +20,22 @@ app.use(cors());
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
-// Create necessary directories for local storage
-const uploadsDir = path.join(__dirname, 'uploads');
-const videosDir = path.join(uploadsDir, 'videos');
-const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
+// Create necessary directories for temporary files and database
+const tempDir = path.join(__dirname, 'temp');
 const dataDir = path.join(__dirname, 'data');
 
-// Ensure all directories exist
-[uploadsDir, videosDir, thumbnailsDir, dataDir].forEach(dir => {
+// Ensure directories exist
+[tempDir, dataDir].forEach(dir => {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
         console.log(`📁 Created directory: ${dir}`);
     }
 });
 
-// Log storage locations
-console.log('📂 Local Storage Configuration:');
-console.log(`   Videos: ${videosDir}`);
-console.log(`   Thumbnails: ${thumbnailsDir}`);
+// Log storage configuration
+console.log('� Firebase Storage Configuration:');
+console.log(`   Storage Bucket: ${bucket.name}`);
+console.log(`   Temp Directory: ${tempDir}`);
 console.log(`   Database: ${path.join(dataDir, 'videos.json')}`);
 
 // Serve static files
@@ -67,10 +66,10 @@ function saveVideosDatabase() {
     }
 }
 
-// Configure multer for file uploads
+// Configure multer for temporary file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, videosDir);
+        cb(null, tempDir);
     },
     filename: (req, file, cb) => {
         const uniqueId = uuidv4();
@@ -140,19 +139,56 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
         }
 
         const videoId = uuidv4();
-        const videoFileName = req.file.filename;
-        const videoPath = req.file.path;
-        
-        // Generate thumbnail
-        const thumbnailFileName = `${path.parse(videoFileName).name}.png`;
-        const thumbnailPath = path.join(thumbnailsDir, thumbnailFileName);
-        
-        let finalThumbnailPath;
+        const videoFileName = `${videoId}${path.extname(req.file.originalname)}`;
+        const thumbnailFileName = `${videoId}_thumbnail.png`;
+        const tempVideoPath = req.file.path;
+
+        console.log(`📤 Uploading video to Firebase: ${title}`);
+
+        // Upload video to Firebase Storage
+        const videoFile = bucket.file(`videos/${videoFileName}`);
+        await videoFile.save(fs.readFileSync(tempVideoPath), {
+            metadata: {
+                contentType: req.file.mimetype,
+                metadata: {
+                    originalName: req.file.originalname,
+                    uploadedBy: 'anonymous', // You can extend this with user authentication
+                    title: title.trim()
+                }
+            }
+        });
+
+        // Make video publicly accessible
+        await videoFile.makePublic();
+        const videoPublicUrl = `https://storage.googleapis.com/${bucket.name}/videos/${videoFileName}`;
+
+        // Generate and upload thumbnail
+        const tempThumbnailPath = path.join(tempDir, `${videoId}_temp_thumbnail.png`);
+        let thumbnailPublicUrl;
+
         try {
-            finalThumbnailPath = await generateThumbnail(videoPath, thumbnailPath);
+            await generateThumbnail(tempVideoPath, tempThumbnailPath);
+            const thumbnailFile = bucket.file(`thumbnails/${thumbnailFileName}`);
+            await thumbnailFile.save(fs.readFileSync(tempThumbnailPath), {
+                metadata: {
+                    contentType: 'image/png'
+                }
+            });
+            await thumbnailFile.makePublic();
+            thumbnailPublicUrl = `https://storage.googleapis.com/${bucket.name}/thumbnails/${thumbnailFileName}`;
+
+            // Clean up temp thumbnail
+            if (fs.existsSync(tempThumbnailPath)) {
+                fs.unlinkSync(tempThumbnailPath);
+            }
         } catch (error) {
-            console.log('Using default thumbnail due to error:', error.message);
-            finalThumbnailPath = thumbnailPath;
+            console.log('Thumbnail generation failed, using default:', error.message);
+            thumbnailPublicUrl = `https://via.placeholder.com/320x180/1a1a1a/ffffff?text=Video`;
+        }
+
+        // Clean up temp video file
+        if (fs.existsSync(tempVideoPath)) {
+            fs.unlinkSync(tempVideoPath);
         }
 
         // Create video entry
@@ -162,8 +198,10 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
             description: description || '',
             fileName: videoFileName,
             thumbnailFileName: thumbnailFileName,
-            publicUrl: `/uploads/videos/${videoFileName}`,
-            thumbnailUrl: `/uploads/thumbnails/${thumbnailFileName}`,
+            publicUrl: videoPublicUrl,
+            thumbnailUrl: thumbnailPublicUrl,
+            firebaseVideoPath: `videos/${videoFileName}`,
+            firebaseThumbnailPath: `thumbnails/${thumbnailFileName}`,
             channel: 'Anonymous User', // You can extend this with user authentication
             views: 0,
             uploadedAt: new Date().toISOString(),
@@ -175,16 +213,22 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
         videosDatabase.push(videoEntry);
         saveVideosDatabase();
 
-        console.log(`✅ Video uploaded successfully: ${title} (ID: ${videoId})`);
+        console.log(`✅ Video uploaded to Firebase: ${title} (ID: ${videoId})`);
         
         res.json({
             success: true,
-            message: 'Video uploaded successfully',
+            message: 'Video uploaded successfully to Firebase Storage',
             video: videoEntry
         });
 
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('Firebase upload error:', error);
+        
+        // Clean up temp files on error
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        
         res.status(500).json({ 
             error: 'Upload failed: ' + error.message 
         });
@@ -241,7 +285,7 @@ app.get('/api/videos/:id', (req, res) => {
 });
 
 // Delete video
-app.delete('/api/videos/:id', (req, res) => {
+app.delete('/api/videos/:id', async (req, res) => {
     try {
         const videoId = req.params.id;
         const videoIndex = videosDatabase.findIndex(v => v.id === videoId);
@@ -252,27 +296,35 @@ app.delete('/api/videos/:id', (req, res) => {
 
         const video = videosDatabase[videoIndex];
         
-        // Delete files
-        const videoPath = path.join(videosDir, video.fileName);
-        const thumbnailPath = path.join(thumbnailsDir, video.thumbnailFileName);
-        
-        if (fs.existsSync(videoPath)) {
-            fs.unlinkSync(videoPath);
+        // Delete files from Firebase Storage
+        try {
+            if (video.firebaseVideoPath) {
+                await bucket.file(video.firebaseVideoPath).delete();
+                console.log(`🗑️ Deleted video from Firebase: ${video.firebaseVideoPath}`);
+            }
+        } catch (error) {
+            console.log(`Warning: Could not delete video file: ${error.message}`);
         }
-        if (fs.existsSync(thumbnailPath)) {
-            fs.unlinkSync(thumbnailPath);
+
+        try {
+            if (video.firebaseThumbnailPath) {
+                await bucket.file(video.firebaseThumbnailPath).delete();
+                console.log(`🗑️ Deleted thumbnail from Firebase: ${video.firebaseThumbnailPath}`);
+            }
+        } catch (error) {
+            console.log(`Warning: Could not delete thumbnail file: ${error.message}`);
         }
 
         // Remove from database
         videosDatabase.splice(videoIndex, 1);
         saveVideosDatabase();
 
-        console.log(`🗑️ Video deleted: ${video.title} (ID: ${videoId})`);
+        console.log(`✅ Video deleted: ${video.title} (ID: ${videoId})`);
         
-        res.json({ success: true, message: 'Video deleted successfully' });
+        res.json({ success: true, message: 'Video deleted successfully from Firebase Storage' });
     } catch (error) {
         console.error('Error deleting video:', error);
-        res.status(500).json({ error: 'Failed to delete video' });
+        res.status(500).json({ error: 'Failed to delete video: ' + error.message });
     }
 });
 
@@ -311,26 +363,22 @@ app.get('/api/health', (req, res) => {
 });
 
 // Storage info endpoint
-app.get('/api/storage-info', (req, res) => {
+app.get('/api/storage-info', async (req, res) => {
     try {
         let totalSize = 0;
-        let videoCount = 0;
+        let videoCount = videosDatabase.length;
         
-        // Calculate total storage used
-        if (fs.existsSync(videosDir)) {
-            const files = fs.readdirSync(videosDir);
-            files.forEach(file => {
-                const filePath = path.join(videosDir, file);
-                const stats = fs.statSync(filePath);
-                totalSize += stats.size;
-                videoCount++;
-            });
-        }
+        // Calculate total storage used from database
+        videosDatabase.forEach(video => {
+            totalSize += video.fileSize || 0;
+        });
         
         res.json({
+            storageType: 'Firebase Storage',
             storageLocation: {
-                videos: videosDir,
-                thumbnails: thumbnailsDir,
+                bucket: bucket.name,
+                videos: 'videos/',
+                thumbnails: 'thumbnails/',
                 database: path.join(dataDir, 'videos.json')
             },
             usage: {
@@ -342,6 +390,11 @@ app.get('/api/storage-info', (req, res) => {
             limits: {
                 maxFileSizeMB: 100,
                 supportedFormats: ['MP4', 'WebM', 'QuickTime', 'AVI']
+            },
+            firebaseInfo: {
+                bucketName: bucket.name,
+                publicAccess: true,
+                cdnEnabled: true
             }
         });
     } catch (error) {
