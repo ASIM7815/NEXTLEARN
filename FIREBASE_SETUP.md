@@ -83,6 +83,9 @@ npm start
 - **Secure**: Enterprise-grade security
 - **Cost-effective**: Pay only for what you use
 - **Automatic backups**: Google handles redundancy
+- **Direct Client Uploads**: Files upload directly from browser to Firebase (much faster!)
+- **Real-time Progress**: Live upload progress tracking
+- **Resumable Uploads**: Firebase handles network interruptions
 
 ### 📊 Current Configuration
 

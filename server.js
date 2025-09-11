@@ -328,18 +328,46 @@ app.delete('/api/videos/:id', async (req, res) => {
     }
 });
 
+// Save video metadata after direct Firebase upload
+app.post('/api/save-video-metadata', (req, res) => {
+    try {
+        const videoData = req.body;
+        
+        // Validate required fields
+        if (!videoData.id || !videoData.title || !videoData.publicUrl) {
+            return res.status(400).json({ error: 'Missing required video metadata' });
+        }
+        
+        // Add to database
+        videosDatabase.push(videoData);
+        saveVideosDatabase();
+        
+        console.log(`✅ Video metadata saved: ${videoData.title} (ID: ${videoData.id})`);
+        
+        res.json({
+            success: true,
+            message: 'Video metadata saved successfully',
+            video: videoData
+        });
+        
+    } catch (error) {
+        console.error('Error saving video metadata:', error);
+        res.status(500).json({ error: 'Failed to save video metadata: ' + error.message });
+    }
+});
+
 // Legacy endpoints for compatibility with existing frontend
 app.post('/api/generate-upload-url', (req, res) => {
     // This endpoint is not needed for direct upload, but kept for compatibility
     res.status(400).json({ 
-        error: 'This endpoint is deprecated. Use /api/upload instead.' 
+        error: 'This endpoint is deprecated. Use direct Firebase upload instead.' 
     });
 });
 
 app.post('/api/upload-complete', (req, res) => {
     // This endpoint is not needed for direct upload, but kept for compatibility
     res.status(400).json({ 
-        error: 'This endpoint is deprecated. Use /api/upload instead.' 
+        error: 'This endpoint is deprecated. Use direct Firebase upload instead.' 
     });
 });
 

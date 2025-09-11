@@ -1,0 +1,18 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow public read access to all files
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+    
+    // Allow uploads to videos and thumbnails directories
+    match /videos/{videoId} {
+      allow write: if true; // In production, add proper authentication
+    }
+    
+    match /thumbnails/{thumbnailId} {
+      allow write: if true; // In production, add proper authentication
+    }
+  }
+}
