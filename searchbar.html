@@ -1199,22 +1199,25 @@
     // Fetches and renders a section on the home page with optimizations
     async function fetchAndRenderSection(queries, gridElement, type = 'video') {
         const shuffledQueries = shuffleArray([...queries]);
-        const selectedQueries = shuffledQueries.slice(0, 4); // Reduced from 6 to 4 for faster loading
-        const combinedQuery = selectedQueries.join(' | ');
+        const selectedQueries = shuffledQueries.slice(0, 2); // Reduced to 2 for more reliable loading
+        const combinedQuery = selectedQueries.join(' OR ');
         const cacheKey = `${type}_${combinedQuery}`;
-        const url = `${API_BASE_URL}?part=snippet&maxResults=24&q=${encodeURIComponent(combinedQuery)}&type=${type}&key=${YOUTUBE_API_KEY}`;
+        const url = `${API_BASE_URL}?part=snippet&maxResults=12&q=${encodeURIComponent(combinedQuery)}&type=${type}&key=${YOUTUBE_API_KEY}&order=relevance&safeSearch=none`;
         
-        // Show loading state without clearing existing content first
-        const loadingElement = document.createElement('p');
-        loadingElement.style.cssText = 'grid-column: 1 / -1; text-align: center; opacity: 0.7;';
-        loadingElement.textContent = 'Loading...';
-        gridElement.appendChild(loadingElement);
+        // Clear grid and show loading
+        gridElement.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; opacity: 0.7;">Loading videos...</p>';
 
         try {
+            console.log(`Fetching ${type} videos with query: ${combinedQuery}`);
+            
             const data = await fetchWithCache(url, cacheKey);
             
-            // Remove loading indicator
-            gridElement.removeChild(loadingElement);
+            console.log(`Received ${data.items ? data.items.length : 0} items for ${type}`);
+
+            if (!data.items || data.items.length === 0) {
+                gridElement.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">No ${type}s found for this section.</p>`;
+                return;
+            }
 
             const allItems = data.items.map(item => ({
                 type: item.id.kind === 'youtube#video' ? 'video' : 'playlist',
@@ -1223,98 +1226,107 @@
                 channel: item.snippet.channelTitle,
                 thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
                 uploaded: `Published on ${new Date(item.snippet.publishedAt).toLocaleDateString()}`
-            }));
+            })).filter(item => item.id && item.title && item.thumbnailUrl); // Filter out incomplete items
+            
+            console.log(`Processed ${allItems.length} valid items for ${type}`);
             
             const titles = allItems.map(v => v.title);
             suggestionKeywords.push(...titles.flatMap(t => t.split(/\s+/)).filter(k => k.length > 3));
             suggestionKeywords = [...new Set(suggestionKeywords)];
             
             const itemsToDisplay = shuffleArray(allItems).slice(0, 6);
+            
+            // Clear loading message and render videos
+            gridElement.innerHTML = '';
             renderVideoGrid(itemsToDisplay, gridElement);
 
         } catch (error) {
             console.error(`Error fetching section (${type}):`, error);
-            gridElement.removeChild(loadingElement);
+            
             if (error.message.includes('quotaExceeded')) {
                 gridElement.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #ff9800;">YouTube API quota exceeded. Please try again later.</p>`;
+            } else if (error.message.includes('keyInvalid')) {
+                gridElement.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #ff4444;">Invalid YouTube API key. Please check your configuration.</p>`;
             } else {
-                showCustomAlert(`Error fetching videos: ${error.message}`);
-                gridElement.innerHTML = `<p style="grid-column: 1 / -1; text-align: center;">Could not load videos for this section.</p>`;
+                // Try fallback with single query
+                console.log(`Trying fallback for ${type} section`);
+                await fetchSectionFallback(queries, gridElement, type);
             }
-        }
-    }
-    
-    // Fetch community videos from our platform
-    async function fetchCommunityVideos() {
-        try {
-            communityGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">Loading community videos...</p>';
-            
-            const response = await fetch(`${window.location.origin}/api/videos`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch community videos');
-            }
-            
-            const communityVideos = await response.json();
-            
-            if (communityVideos.length === 0) {
-                communityGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; font-size: 16px; color: var(--text-dim);">No videos uploaded yet. <a href="#" onclick="openUploadModal()" style="color: var(--accent);">Be the first to share!</a></p>';
-                return;
-            }
-            
-            // Display first 6 community videos
-            communityGrid.innerHTML = '';
-            communityVideos.slice(0, 6).forEach(video => {
-                const videoCard = document.createElement('div');
-                videoCard.className = 'video-card';
-                videoCard.onclick = () => playUploadedVideo(video.publicUrl, video.title, video);
-                
-                videoCard.innerHTML = `
-                    <div class="thumbnail-container">
-                        <img src="${video.thumbnailUrl}" alt="${video.title}" class="thumbnail" loading="lazy" onerror="this.onerror=null;this.src='https://via.placeholder.com/320x180/1a1a1a/ffffff?text=Video';">
-                    </div>
-                    <div class="video-info">
-                        <h3 class="video-title">${video.title}</h3>
-                        <p class="video-meta">${video.channel}</p>
-                        <p class="video-meta">${video.views || 0} views • ${new Date(video.uploadedAt).toLocaleDateString()}</p>
-                    </div>
-                `;
-                communityGrid.appendChild(videoCard);
-            });
-            
-        } catch (error) {
-            console.error('Error fetching community videos:', error);
-            communityGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">Unable to load community videos at this time.</p>';
         }
     }
 
+    // Fallback function for when combined queries fail
+    async function fetchSectionFallback(queries, gridElement, type = 'video') {
+        try {
+            const singleQuery = queries[0]; // Use first query as fallback
+            const url = `${API_BASE_URL}?part=snippet&maxResults=6&q=${encodeURIComponent(singleQuery)}&type=${type}&key=${YOUTUBE_API_KEY}&order=relevance`;
+            
+            console.log(`Fallback fetch for ${type} with query: ${singleQuery}`);
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.items && data.items.length > 0) {
+                const allItems = data.items.map(item => ({
+                    type: item.id.kind === 'youtube#video' ? 'video' : 'playlist',
+                    id: item.id.videoId || item.id.playlistId,
+                    title: item.snippet.title,
+                    channel: item.snippet.channelTitle,
+                    thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+                    uploaded: `Published on ${new Date(item.snippet.publishedAt).toLocaleDateString()}`
+                })).filter(item => item.id && item.title);
+                
+                gridElement.innerHTML = '';
+                renderVideoGrid(allItems, gridElement);
+                console.log(`Fallback successful for ${type}: ${allItems.length} items`);
+            } else {
+                gridElement.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">No ${type}s available at the moment.</p>`;
+            }
+        } catch (fallbackError) {
+            console.error(`Fallback also failed for ${type}:`, fallbackError);
+            gridElement.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">Unable to load ${type}s. Please try refreshing the page.</p>`;
+        }
+    }
+    
     function renderHomePage() {
         homePageContent.style.display = 'block';
         searchResultsContent.style.display = 'none';
         
         suggestionKeywords = [];
         
+        console.log('Loading home page with API key:', YOUTUBE_API_KEY.substring(0, 10) + '...');
+        
         // Load community videos first
         fetchCommunityVideos();
         
-        // Load YouTube videos in parallel for faster loading
-        if (YOUTUBE_API_KEY !== 'YOUR_API_KEY_HERE') {
-            // Use Promise.all to load sections in parallel
-            Promise.all([
-                fetchAndRenderSection(whatIsQueries, whatIsGrid, 'video'),
-                fetchAndRenderSection(howToQueries, howToGrid, 'video'),
-                fetchAndRenderSection(freeCoursesQueries, coursesGrid, 'playlist')
-            ]).catch(error => {
-                console.error('Error loading home page sections:', error);
-            });
+        // Load YouTube videos with better error handling
+        if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== 'YOUR_API_KEY_HERE') {
+            // Load sections sequentially to avoid rate limiting
+            setTimeout(() => {
+                fetchAndRenderSection(whatIsQueries, whatIsGrid, 'video');
+            }, 100);
+            
+            setTimeout(() => {
+                fetchAndRenderSection(howToQueries, howToGrid, 'video');
+            }, 500);
+            
+            setTimeout(() => {
+                fetchAndRenderSection(freeCoursesQueries, coursesGrid, 'playlist');
+            }, 1000);
         } else {
-            whatIsGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">YouTube integration disabled. Add your API key to enable.</p>';
-            howToGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">YouTube integration disabled. Add your API key to enable.</p>';
-            coursesGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">YouTube integration disabled. Add your API key to enable.</p>';
+            console.error('YouTube API key not found or invalid');
+            whatIsGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">YouTube integration disabled. API key required.</p>';
+            howToGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">YouTube integration disabled. API key required.</p>';
+            coursesGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-dim);">YouTube integration disabled. API key required.</p>';
         }
     }
 
     async function searchYouTube(query) {
-       if (YOUTUBE_API_KEY === 'YOUR_API_KEY_HERE') {
+       if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === 'YOUR_API_KEY_HERE') {
             showCustomAlert('Please add your YouTube API Key to the script file to enable search.');
             return;
         }
@@ -1323,12 +1335,18 @@
         searchResultsContent.style.display = 'block';
 
         const cacheKey = `search_${query}`;
-        const url = `${API_BASE_URL}?part=snippet&maxResults=24&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}`;
+        const url = `${API_BASE_URL}?part=snippet&maxResults=20&q=${encodeURIComponent(query)}&type=video&key=${YOUTUBE_API_KEY}&order=relevance`;
         mainTitle.textContent = `Searching for "${query}"...`;
         videoGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">Searching...</p>';
 
         try {
+            console.log('Searching YouTube with query:', query);
             const data = await fetchWithCache(url, cacheKey);
+            
+            if (!data.items || data.items.length === 0) {
+                renderVideoGrid([], videoGrid, `No results found for "${query}"`);
+                return;
+            }
             
             const results = data.items.map(item => ({
                 type: 'video',
@@ -1337,17 +1355,21 @@
                 channel: item.snippet.channelTitle,
                 thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
                 uploaded: `Published on ${new Date(item.snippet.publishedAt).toLocaleDateString()}`
-            }));
+            })).filter(item => item.id && item.title);
             
             renderVideoGrid(results, videoGrid, `Results for "${query}"`);
+            console.log(`Search completed: ${results.length} results`);
 
         } catch (error) {
             console.error("Error searching YouTube:", error);
             if (error.message.includes('quotaExceeded')) {
                 showCustomAlert("YouTube API quota exceeded. Please try again later.");
                 renderVideoGrid([], videoGrid, `No results for "${query}" - API limit reached`);
+            } else if (error.message.includes('keyInvalid')) {
+                showCustomAlert("Invalid YouTube API key. Please check your configuration.");
+                renderVideoGrid([], videoGrid, `Search unavailable - Invalid API key`);
             } else {
-                showCustomAlert("An error occurred during the search.");
+                showCustomAlert("An error occurred during the search. Please try again.");
                 renderVideoGrid([], videoGrid, `No results for "${query}"`);
             }
         }
@@ -1605,6 +1627,31 @@
         document.getElementById('videoPlayer').style.display = 'block';
         originalCloseVideoPlayer();
     };
+
+    // Initialize the app when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+        console.log('Page loaded, initializing...');
+        
+        // Test API key on page load
+        if (YOUTUBE_API_KEY && YOUTUBE_API_KEY !== 'YOUR_API_KEY_HERE') {
+            // Test the API key with a simple request
+            fetch(`${API_BASE_URL}?part=snippet&maxResults=1&q=test&type=video&key=${YOUTUBE_API_KEY}`)
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('API key test failed:', response.status);
+                        showCustomAlert('YouTube API key appears to be invalid. Please check your configuration.');
+                    } else {
+                        console.log('YouTube API key validated successfully');
+                    }
+                })
+                .catch(error => {
+                    console.error('API key test error:', error);
+                });
+        }
+        
+        // Load home page
+        renderHomePage();
+    });
   </script>
 </body>
 </html>
